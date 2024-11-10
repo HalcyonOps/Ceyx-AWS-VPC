@@ -50,6 +50,7 @@ Desktop.ini
 *.crt
 *.csr
 *.cer
+*.b64
 
 # Logs and reports
 *.log
