@@ -5,6 +5,7 @@ A Terraform module to provision an AWS VPC with public and private subnets, Inte
 ## Overview
 
 This module creates a VPC with:
+
 - Public and private subnets across specified Availability Zones
 - Internet Gateway for public subnets
 - NAT Gateway for enabling outbound internet access from private subnets

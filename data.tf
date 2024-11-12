@@ -1,23 +1,10 @@
-data "aws_iam_policy_document" "flow_logs_key_policy" {
-  statement {
-    actions = [
-      "kms:Encrypt",
-      "kms:Decrypt",
-      "kms:ReEncrypt*",
-      "kms:GenerateDataKey*",
-      "kms:DescribeKey"
-    ]
-    resources = [
-      "arn:aws:kms:${local.region}:${data.aws_caller_identity.current.account_id}:key/*"
-    ]
+# Get current AWS region
+data "aws_region" "current" {}
 
-    principals {
-      type        = "AWS"
-      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${aws_iam_role.flow_logs_role.name}"]
-    }
-  }
-
-  # Add additional statements if required
+# Get available AZs in the current region
+data "aws_availability_zones" "available" {
+  state = "available"
 }
 
+# Get current AWS account ID
 data "aws_caller_identity" "current" {}

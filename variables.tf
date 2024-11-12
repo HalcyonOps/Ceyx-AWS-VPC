@@ -1,66 +1,105 @@
+#------------------------------------------------------------------------------
+# General Configuration
+#------------------------------------------------------------------------------
+
+variable "tags" {
+  description = "A map of tags to add to all resources"
+  type        = map(string)
+  default     = {}
+  validation {
+    condition     = can(lookup(var.tags, "Project", null))
+    error_message = "Tags must include a 'Project' key for resource naming"
+  }
+}
+
+#------------------------------------------------------------------------------
+# VPC Configuration
+#------------------------------------------------------------------------------
+
 variable "vpc_cidr" {
-  description = "The CIDR block for the VPC."
+  description = "The CIDR block for the VPC"
   type        = string
   validation {
     condition     = can(regex("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/\\d{1,2}$", var.vpc_cidr))
-    error_message = "vpc_cidr must be a valid CIDR notation (e.g., 10.0.0.0/16)."
+    error_message = "The vpc_cidr value must be a valid CIDR block"
   }
 }
 
-variable "public_subnets" {
-  description = "List of CIDR blocks for public subnets."
+variable "enable_dns_hostnames" {
+  description = "Enable DNS hostnames in the VPC"
+  type        = bool
+  default     = true
+}
+
+variable "enable_dns_support" {
+  description = "Enable DNS support in the VPC"
+  type        = bool
+  default     = true
+}
+
+#------------------------------------------------------------------------------
+# Subnet Configuration
+#------------------------------------------------------------------------------
+
+variable "availability_zones" {
+  description = "List of availability zones for subnet placement"
   type        = list(string)
   validation {
-    condition     = length(var.public_subnets) > 0
-    error_message = "At least one public subnet CIDR block must be provided."
+    condition     = length(var.availability_zones) > 0
+    error_message = "At least one availability zone must be specified"
   }
 }
 
-variable "private_subnets" {
-  description = "List of CIDR blocks for private subnets."
-  type        = list(string)
+variable "subnet_bits" {
+  description = "Number of additional bits with which to extend the VPC CIDR prefix for subnet calculations"
+  type        = number
+  default     = 8
   validation {
-    condition     = length(var.private_subnets) > 0
-    error_message = "At least one private subnet CIDR block must be provided."
+    condition     = var.subnet_bits >= 1 && var.subnet_bits <= 16
+    error_message = "Subnet bits must be between 1 and 16"
   }
 }
 
-variable "azs" {
-  description = "List of Availability Zones."
+variable "create_public_subnets" {
+  description = "Whether to create public subnets"
+  type        = bool
+  default     = true
+}
+
+#------------------------------------------------------------------------------
+# CIDR Configuration
+#------------------------------------------------------------------------------
+
+variable "secondary_cidr_blocks" {
+  description = "List of secondary CIDR blocks to associate with the VPC"
   type        = list(string)
+  default     = []
   validation {
-    condition     = length(var.azs) >= 1
-    error_message = "At least one Availability Zone must be specified."
+    condition     = alltrue([for cidr in var.secondary_cidr_blocks : can(regex("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/\\d{1,2}$", cidr))])
+    error_message = "All secondary CIDR blocks must be valid CIDR notation"
   }
 }
 
-variable "region" {
-  description = "The region to deploy the VPC in."
+#------------------------------------------------------------------------------
+# Resource Naming
+#------------------------------------------------------------------------------
+
+variable "name_prefix" {
+  description = "Prefix to be used for resource names"
   type        = string
-}
-
-variable "tags" {
-  description = "Tags to apply to resources."
-  type        = map(string)
-
+  default     = ""
   validation {
-    condition = (
-      contains(keys(var.tags), "Environment") &&
-      contains(keys(var.tags), "Owner") &&
-      contains(keys(var.tags), "Project")
-    )
-    error_message = "Tags must include Environment, Owner, and Project."
+    condition     = length(var.name_prefix) <= 20
+    error_message = "The name_prefix value must not exceed 20 characters"
   }
 }
 
-variable "enable_nat_gateway" {
-  description = "Enable NAT Gateway for private subnets."
-  type        = bool
-  default     = true
-}
+#------------------------------------------------------------------------------
+# Route Table Configuration
+#------------------------------------------------------------------------------
 
-variable "single_nat_gateway" {
-  description = "Use a single NAT Gateway for all private subnets."
-  type        = bool
-  default     = true
+variable "route_table_tags" {
+  description = "Additional tags for the route tables"
+  type        = map(string)
+  default     = {}
 }
